@@ -186,7 +186,6 @@ public class PairingHeap<T extends Comparable<? super T>> {
     }
 
     public interface Position<T> {
-
         T getValue();
     }
 

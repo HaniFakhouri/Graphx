@@ -1,6 +1,5 @@
 package keerov.graphx;
 
-import keerov.graphx.ds.PairingHeap.Position;
 import java.awt.Color;
 import java.awt.Point;
 import java.io.Serializable;
@@ -13,6 +12,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
+import keerov.graphx.ds.PairingHeap.Position;
+
 /**
  *
  * @author Keerov
@@ -20,6 +21,7 @@ import java.util.Queue;
  */
 public class Graph implements Serializable {
 
+	private static final long serialVersionUID = 1L;
 	private HashMap<String, Vertex> vertexMap;
 	private boolean isDirected;
 
@@ -92,8 +94,10 @@ public class Graph implements Serializable {
 
 	public HashMap<String, Vertex> getVertexMap() {
 		HashMap<String, Vertex> copy = new HashMap<String, Vertex>();
+		@SuppressWarnings("rawtypes")
 		Iterator it = vertexMap.entrySet().iterator();
 		while (it.hasNext()) {
+			@SuppressWarnings("rawtypes")
 			Map.Entry pairs = (Map.Entry) it.next();
 			copy.put((String) pairs.getKey(), (Vertex) pairs.getValue());
 		}
@@ -104,8 +108,10 @@ public class Graph implements Serializable {
 		clear();
 		clearGraph();
 		vertexMap = new HashMap<String, Vertex>();
+		@SuppressWarnings("rawtypes")
 		Iterator it = map.entrySet().iterator();
 		while (it.hasNext()) {
+			@SuppressWarnings("rawtypes")
 			Map.Entry pairs = (Map.Entry) it.next();
 			vertexMap.put((String) pairs.getKey(), (Vertex) pairs.getValue());
 		}
@@ -139,7 +145,7 @@ public class Graph implements Serializable {
 	 * @param dest
 	 * @param newFlow
 	 */
-	 public void updateEdgeFlow(String src, String dest, int newFlow) {
+	public void updateEdgeFlow(String src, String dest, int newFlow) {
 		boolean found = false;
 		Vertex v = vertexMap.get(src);
 		for (Edge e : v.adj) {
@@ -157,322 +163,348 @@ public class Graph implements Serializable {
 				}
 			}
 		}
-	 }
+	}
 
-	 public void addEdge(String source, String dest, int cost) {
-		 Vertex source_v = vertexMap.get(source);
-		 Vertex dest_v = vertexMap.get(dest);
+	public void addEdge(String source, String dest, int cost) {
+		Vertex source_v = vertexMap.get(source);
+		Vertex dest_v = vertexMap.get(dest);
 
-		 boolean found = false;
+		boolean found = false;
 
-		 for (Edge e : source_v.adj) {
-			 if (e.dest.name.equals(dest)) {
-				 e.cost = cost;
-				 found = true;
-				 for (Edge ee : dest_v.adjEntering) {
-					 if (ee.src.name.equals(source)) {
-						 ee.cost = cost;
-						 break;
-					 }
-				 }
-				 if (!isDirected) {
-					 for (Edge ee : source_v.adjEntering) {
-						 if (ee.src.name.equals(dest)) {
-							 ee.cost = cost;
-							 break;
-						 }
-					 }
-				 } else {
-					 break;
-				 }
-			 }
-		 }
+		for (Edge e : source_v.adj) {
+			if (e.dest.name.equals(dest)) {
+				e.cost = cost;
+				found = true;
+				for (Edge ee : dest_v.adjEntering) {
+					if (ee.src.name.equals(source)) {
+						ee.cost = cost;
+						break;
+					}
+				}
+				if (!isDirected) {
+					for (Edge ee : source_v.adjEntering) {
+						if (ee.src.name.equals(dest)) {
+							ee.cost = cost;
+							break;
+						}
+					}
+				} else {
+					break;
+				}
+			}
+		}
 
-		 if (!found) {
-			 Edge e = new Edge(source_v, dest_v, cost);
-			 source_v.adj.add(e);
-			 dest_v.adjEntering.add(e);
-			 if (!isDirected) {
-				 e = new Edge(dest_v, source_v, cost);
-				 dest_v.adj.add(e);
-				 source_v.adjEntering.add(e);
-			 }
-		 }
-	 }
+		if (!found) {
+			Edge e = new Edge(source_v, dest_v, cost);
+			source_v.adj.add(e);
+			dest_v.adjEntering.add(e);
+			if (!isDirected) {
+				e = new Edge(dest_v, source_v, cost);
+				dest_v.adj.add(e);
+				source_v.adjEntering.add(e);
+			}
+		}
+	}
 
-	 private void addEdge(Vertex source, Vertex dest, int cost) {
-		 addEdge(source.name, dest.name, cost);
-	 }
+	private void addEdge(Vertex source, Vertex dest, int cost) {
+		addEdge(source.name, dest.name, cost);
+	}
 
-	 public void removeVertex(String vertexName) {
-		 removeEdges(vertexName);
-		 vertexMap.remove(vertexName);
-	 }
+	public void removeVertex(String vertexName) {
+		removeEdges(vertexName);
+		vertexMap.remove(vertexName);
+	}
 
-	 public void removeEdges(Vertex vertex) {
-		 removeEdges(vertex.name);
-	 }
+	public void removeEdges(Vertex vertex) {
+		removeEdges(vertex.name);
+	}
 
-	 public void removeEdge(String src, String dest) {
-		 Vertex v = vertexMap.get(src);
-		 int index = 0;
-		 for (Edge e : v.adj) {
-			 Vertex w = e.dest;
-			 int index2 = 0;
-			 if (w.name.equals(dest)) {
-				 for (Edge ew : w.adjEntering) {
-					 if (ew.src.name.equals(src)) {
-						 break;
-					 }
-					 index2++;
-				 }
-				 if (!w.adjEntering.isEmpty()) {
-					 w.adjEntering.remove(index2);
-				 }
-				 break;
-			 }
-			 index++;
-		 }
-		 if (!v.adj.isEmpty()) {
-			 v.adj.remove(index);
-		 }
-	 }
+	public void removeEdge(String src, String dest) {
+		Vertex v = vertexMap.get(src);
+		int index = 0;
+		for (Edge e : v.adj) {
+			Vertex w = e.dest;
+			int index2 = 0;
+			if (w.name.equals(dest)) {
+				for (Edge ew : w.adjEntering) {
+					if (ew.src.name.equals(src)) {
+						break;
+					}
+					index2++;
+				}
+				if (!w.adjEntering.isEmpty()) {
+					w.adjEntering.remove(index2);
+				}
+				break;
+			}
+			index++;
+		}
+		if (!v.adj.isEmpty()) {
+			v.adj.remove(index);
+		}
+	}
 
-	 private void removeAllEdges() {
-		 for (Vertex v : vertexMap.values()) {
-			 removeEdges(v);
-		 }
-	 }
+	private void removeAllEdges() {
+		for (Vertex v : vertexMap.values()) {
+			removeEdges(v);
+		}
+	}
 
-	 public void makeCompelete() {
-		 boolean temp = isDirected;
-		 isDirected = true;
+	public void makeCompelete() {
+		boolean temp = isDirected;
+		isDirected = true;
 
-		 removeAllEdges();
-		 for (Vertex v : vertexMap.values()) {
-			 for (Vertex u : vertexMap.values()) {
-				 if (!v.name.equals(u.name)) {
-					 addEdge(v, u, 1);
-				 }
-			 }
-		 }
-		 isDirected = temp;
-	 }
+		removeAllEdges();
+		for (Vertex v : vertexMap.values()) {
+			for (Vertex u : vertexMap.values()) {
+				if (!v.name.equals(u.name)) {
+					addEdge(v, u, 1);
+				}
+			}
+		}
+		isDirected = temp;
+	}
 
-	 private void removeEdges(String vertexName) {
+	private void removeEdges(String vertexName) {
 
-		 Vertex v = vertexMap.get(vertexName);
+		Vertex v = vertexMap.get(vertexName);
 
-		 // v --> u, remove v from u's adjEntering list
-		 for (int i = 0; i < v.adj.size(); i++) {
-			 Vertex u = v.adj.get(i).dest;
-			 int index = 0;
-			 for (Edge e : u.adjEntering) {
-				 if (e.src.name.equals(v.name)) {
-					 break;
-				 }
-				 index++;
-			 }
-			 u.adjEntering.remove(index);
-		 }
+		// v --> u, remove v from u's adjEntering list
+		for (int i = 0; i < v.adj.size(); i++) {
+			Vertex u = v.adj.get(i).dest;
+			int index = 0;
+			for (Edge e : u.adjEntering) {
+				if (e.src.name.equals(v.name)) {
+					break;
+				}
+				index++;
+			}
+			u.adjEntering.remove(index);
+		}
 
-		 // u --> v, remove v from u's adj list
-		 for (int i = 0; i < v.adjEntering.size(); i++) {
-			 Vertex u = v.adjEntering.get(i).src;
-			 int index = 0;
-			 for (Edge e : u.adj) {
-				 if (e.dest.name.equals(v.name)) {
-					 break;
-				 }
-				 index++;
-			 }
-			 u.adj.remove(index);
-		 }
+		// u --> v, remove v from u's adj list
+		for (int i = 0; i < v.adjEntering.size(); i++) {
+			Vertex u = v.adjEntering.get(i).src;
+			int index = 0;
+			for (Edge e : u.adj) {
+				if (e.dest.name.equals(v.name)) {
+					break;
+				}
+				index++;
+			}
+			u.adj.remove(index);
+		}
 
-		 v.adj.clear();
-		 v.adjEntering.clear();
-	 }
+		v.adj.clear();
+		v.adjEntering.clear();
+	}
 
-	 @Override
-	 public Graph clone() {
-		 Graph clone = new Graph();
-		 clone.setDirected(true);
-		 for (Vertex v : vertexMap.values()) {
-			 for (Edge e : v.adj) {
-				 clone.addVertex(e.src.x, e.src.y, e.src.name);
-				 clone.addVertex(e.dest.x, e.dest.y, e.dest.name);
-				 clone.addEdge(e.src.name, e.dest.name, e.cost);
-			 }
-			 for (Edge e : v.adjEntering) {
-				 clone.addVertex(e.src.x, e.src.y, e.src.name);
-				 clone.addVertex(e.dest.x, e.dest.y, e.dest.name);
-				 clone.addEdge(e.src.name, e.dest.name, e.cost);
-			 }
-		 }
-		 return clone;
-	 }
+	@Override
+	public Graph clone() {
+		Graph clone = new Graph();
+		clone.setDirected(true);
+		for (Vertex v : vertexMap.values()) {
+			for (Edge e : v.adj) {
+				clone.addVertex(e.src.x, e.src.y, e.src.name);
+				clone.addVertex(e.dest.x, e.dest.y, e.dest.name);
+				clone.addEdge(e.src.name, e.dest.name, e.cost);
+			}
+			for (Edge e : v.adjEntering) {
+				clone.addVertex(e.src.x, e.src.y, e.src.name);
+				clone.addVertex(e.dest.x, e.dest.y, e.dest.name);
+				clone.addEdge(e.src.name, e.dest.name, e.cost);
+			}
+		}
+		return clone;
+	}
 
-	 public void printGraph() {
-		 for (Vertex v : vertexMap.values()) {
-			 System.out.print(v.name + ": ");
-			 for (Edge e : v.adj) {
-				 System.out.println(e.toString());
-			 }
-			 for (Edge e : v.adjEntering) {
-				 System.out.println(e.toString());
-			 }
-			 System.out.println();
-		 }
-	 }
+	public void printGraph() {
+		for (Vertex v : vertexMap.values()) {
+			System.out.print(v.name + ": ");
+			for (Edge e : v.adj) {
+				System.out.println(e.toString());
+			}
+			for (Edge e : v.adjEntering) {
+				System.out.println(e.toString());
+			}
+			System.out.println();
+		}
+	}
 
-	 public boolean isBipartite() {
+	public boolean isBipartite() {
 
-		 boolean isBipartite = true;
+		boolean isBipartite = true;
 
-		 for (Vertex v : vertexMap.values()) {
-			 if (!v.visited) {
-				 Queue<Vertex> q = new LinkedList<Vertex>();
+		for (Vertex v : vertexMap.values()) {
+			if (!v.visited) {
+				Queue<Vertex> q = new LinkedList<Vertex>();
 
-				 v.color = 1;
-				 v.visited = true;
-				 q.add(v);
+				v.color = 1;
+				v.visited = true;
+				q.add(v);
 
-				 while (!q.isEmpty()) {
+				while (!q.isEmpty()) {
 
-					 v = q.poll();
-					 for (Edge e : v.adj) {
-						 Vertex w = e.dest;
-						 if (v.color == w.color) {
-							 return false;
-						 }
-						 if (!w.visited) {
-							 w.visited = true;
-							 if (v.color == 1) {
-								 w.color = 2;
-							 } else {
-								 w.color = 1;
-							 }
-							 q.add(w);
-						 }
-					 }
+					v = q.poll();
+					for (Edge e : v.adj) {
+						Vertex w = e.dest;
+						if (v.color == w.color) {
+							return false;
+						}
+						if (!w.visited) {
+							w.visited = true;
+							if (v.color == 1) {
+								w.color = 2;
+							} else {
+								w.color = 1;
+							}
+							q.add(w);
+						}
+					}
 
-				 }
-			 }
-		 }
+				}
+			}
+		}
 
-		 return isBipartite;
+		return isBipartite;
 
-	 }
+	}
+	
+	public static class Vertex implements Serializable {
 
-	 public static class Vertex implements Serializable {
+		private static final long serialVersionUID = 1L;
+		public String name;
+		public int x, y;
+		public int color;
+		public int dist;
+		public boolean visited;
+		public Vertex prev;
+		public ArrayList<Edge> adj;
+		public ArrayList<Edge> adjEntering;
+		public Color vColor = Color.BLUE;
+		public int disjointSetIndex;
+		public Position pos;
 
-		 public String name;
-		 public int x, y;
-		 public int color;
-		 public int dist;
-		 public Position pos;
-		 public boolean visited;
-		 public Vertex prev;
-		 public ArrayList<Edge> adj;
-		 public ArrayList<Edge> adjEntering;
-		 public Color vColor = Color.BLUE;
-		 public int disjointSetIndex;
+		public Vertex(String name) {
+			this.name = name;
+			adj = new ArrayList<Edge>();
+			adjEntering = new ArrayList<Edge>();
+			clear();
+		}
 
-		 public Vertex(String name) {
-			 this.name = name;
-			 adj = new ArrayList<Edge>();
-			 adjEntering = new ArrayList<Edge>();
-			 clear();
-		 }
+		public void clear() {
+			visited = false;
+			prev = null;
+			color = 0;
+			vColor = Color.BLUE;
+			dist = 999;
+			disjointSetIndex = 0;
+			pos = null;
+			for (Edge e : adj) {
+				e.clear();
+			}
+			for (Edge e : adjEntering) {
+				e.clear();
+			}
+		}
 
-		 public void clear() {
-			 visited = false;
-			 prev = null;
-			 color = 0;
-			 vColor = Color.BLUE;
-			 dist = 999;
-			 pos = null;
-			 disjointSetIndex = 0;
-			 for (Edge e : adj) {
-				 e.clear();
-			 }
-			 for (Edge e : adjEntering) {
-				 e.clear();
-			 }
-		 }
-	 }
+	}
+	
+	public static class SerializableVertex implements Serializable {
 
-	 public static class Edge implements Serializable, Comparable<Edge> {
+		private static final long serialVersionUID = 1L;
+		public String name;
+		public int x, y;
+		public Edge[] adj;
+		private int adj_c = 0;
+		public SerializableVertex(int x, int y, String name, int adjSize) {
+			this.x = x;
+			this.y = y;
+			this.name = name;
+			adj = new Edge[adjSize];
+		}
+		public void addAdjEdge(String src, String dest, int cost) {
+			Edge e = new Edge(new Vertex(src), new Vertex(dest), cost);
+			adj[adj_c] = e;
+			adj_c++;
+		}
 
-		 public int cost, flow;
-		 public Vertex src, dest;
-		 public Color eColor = Color.BLUE;
+	}
 
-		 public Edge(Vertex src, Vertex dest, int cost) {
-			 this.src = src;
-			 this.dest = dest;
-			 this.cost = cost;
-			 clear();
-		 }
+	public static class Edge implements Serializable, Comparable<Edge> {
 
-		 public void clear() {
-			 flow = 0;
-			 eColor = Color.BLUE;
-		 }
+		private static final long serialVersionUID = 1L;
+		public int cost, flow;
+		public Vertex src, dest;
+		public Color eColor = Color.BLUE;
 
-		 @Override
-		 public String toString() {
-			 return src.name + " -- " + flow + "/" + cost + "--> " + dest.name;
-		 }
+		public Edge(Vertex src, Vertex dest, int cost) {
+			this.src = src;
+			this.dest = dest;
+			this.cost = cost;
+			clear();
+		}
 
-		 @Override
-		 public boolean equals(Object o) {
-			 Edge e = (Edge) o;
+		public void clear() {
+			flow = 0;
+			eColor = Color.BLUE;
+		}
 
-			 String s1 = src.name;
-			 String d1 = dest.name;
+		@Override
+		public String toString() {
+			return src.name + " -- " + flow + "/" + cost + "--> " + dest.name;
+		}
 
-			 String s2 = e.src.name;
-			 String d2 = e.dest.name;
+		@Override
+		public boolean equals(Object o) {
+			Edge e = (Edge) o;
 
-			 if (s1.equals(s2) && d1.equals(d2)) {
-				 return true;
-			 }
-			 if (s1.equals(d2) && s2.equals(d1)) {
-				 return true;
-			 }
-			 return false;
-		 }
+			String s1 = src.name;
+			String d1 = dest.name;
 
-		 @Override
-		 public int hashCode() {
-			 char[] src_c = src.name.toCharArray();
-			 char[] dst_c = dest.name.toCharArray();
-			 int h = 0;
-			 for (char c : src_c) {
-				 h += (int) c;
-			 }
-			 for (char c : dst_c) {
-				 h += (int) c;
-			 }
-			 return h;
-		 }
+			String s2 = e.src.name;
+			String d2 = e.dest.name;
 
-		 public int compareTo(Edge o) {
-			 return 1;
-		 }
+			if (s1.equals(s2) && d1.equals(d2)) {
+				return true;
+			}
+			if (s1.equals(d2) && s2.equals(d1)) {
+				return true;
+			}
+			return false;
+		}
 
-		 public static class EdgeComparator implements Comparator<Edge> {
+		@Override
+		public int hashCode() {
+			char[] src_c = src.name.toCharArray();
+			char[] dst_c = dest.name.toCharArray();
+			int h = 0;
+			for (char c : src_c) {
+				h += (int) c;
+			}
+			for (char c : dst_c) {
+				h += (int) c;
+			}
+			return h;
+		}
 
-			 public int compare(Edge o1, Edge o2) {
-				 if (o1.cost > o2.cost) {
-					 return 1;
-				 }
-				 if (o1.cost < o2.cost) {
-					 return -1;
-				 }
-				 return 0;
-			 }
-		 }
-	 }
+		public int compareTo(Edge o) {
+			return 1;
+		}
+
+		public static class EdgeComparator implements Comparator<Edge> {
+
+			public int compare(Edge o1, Edge o2) {
+				if (o1.cost > o2.cost) {
+					return 1;
+				}
+				if (o1.cost < o2.cost) {
+					return -1;
+				}
+				return 0;
+			}
+		}
+
+	}
+
 }

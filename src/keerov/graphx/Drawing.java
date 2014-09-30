@@ -1,10 +1,7 @@
 package keerov.graphx;
 
-import keerov.graphx.ds.DisjointSet;
-import keerov.graphx.Graph.Edge;
-import keerov.graphx.Graph.Vertex;
-import keerov.graphx.ds.PairingHeap;
-import keerov.graphx.ds.Stack;
+import keerov.graphx.Graph.*;
+import keerov.graphx.ds.*;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -20,14 +17,11 @@ import java.io.FileOutputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
@@ -41,16 +35,16 @@ import java.util.logging.Logger;
 */
 public class Drawing extends javax.swing.JPanel {
 
-    private static final Color ONE = Color.RED;
+	private static final Color ONE = Color.RED;
     private static final Color TWO = Color.GREEN;
-    private static int SQUARE_SIZE = 20;
     private static final int STATE_IDLE = -1;
     private static final int STATE_PRESSED = 0;
     private static final int STATE_DROPPED = 1;
 
     private static int GUI_EXECUTION_PAUSE = 1000;
     private static int GUI_RESULT_PAUSE = 10000;
-
+    private static int SQUARE_SIZE = 20;
+    
     private Graphics g;
     private int x0, y0, x1, y1;
     private int click_state;
@@ -65,6 +59,7 @@ public class Drawing extends javax.swing.JPanel {
     private boolean showEdgeCost;
     private boolean showEdgeFlow;
     private boolean showVertexDist;
+    private boolean showVertexName;
 
     int width, height;
 
@@ -88,6 +83,7 @@ public class Drawing extends javax.swing.JPanel {
         showEdgeCost = true;
         showEdgeFlow = true;
         showVertexDist = true;
+        showVertexName = true;
 
         click_state = STATE_IDLE;
         current_x = -1;
@@ -196,6 +192,11 @@ public class Drawing extends javax.swing.JPanel {
         showVertexDist = show;
         repaint();
     }
+    
+    public void showVertexName(boolean show) {
+    	showVertexName = show;
+    	repaint();
+    }
 
     private Vertex getClickedVertex(int currentX, int currentY) {
         Point p = new Point(rel(currentX), rel(currentY));
@@ -240,6 +241,48 @@ public class Drawing extends javax.swing.JPanel {
         }
         getClickedVertex();
         repaint();
+    }
+    
+    public void createMaze(int w, int h) {
+    	if (!edit) {
+    		gui.console("Click \"Edit Graph\" button");
+    		return;
+    	}
+    	
+    	clearGraph();
+    	
+    	boolean directed = graph.isDirected();
+    	graph.setDirected(false);
+    	
+    	for (int j=1; j<h+1; j++) {
+    		for (int i=1; i<w; i++) {
+    			
+    			Random rand = new Random();
+    			int max = w*h;
+    			int min = 1;
+    			int r = rand.nextInt((max - min) + 1) + min;
+    			
+        		Point p1 = new Point(i, j);
+        		Point p2 = new Point(i+1, j);
+        		addVertex(p1, String.valueOf(i+""+j+"_"+r));
+        		addVertex(p2, String.valueOf((i+1)+""+(j+1)+"_"+r));
+        		addEdge(p1, p2, 1);
+        	}
+    	}
+    	
+    	for (int j=1; j<w+1; j++) {
+    		for (int i=1; i<h+1; i++) {
+        		Point p1 = new Point(j, i);
+        		Point p2 = new Point(j, i+1);
+        		Point p3 = new Point(j+1, i+1);
+        		addEdge(p1, p2, 1);
+        		addEdge(p1, p3, 1);
+        	}
+    	}
+    	
+    	graph.setDirected(directed);
+    	
+    	repaint();
     }
 
     public void makeComplete() {
@@ -327,7 +370,18 @@ public class Drawing extends javax.swing.JPanel {
     }
 
     public void addVertex(String newName) {
-        addVertex(relX(), relY(), newName);
+    	if (graph.containsVertex(newName)) {
+            gui.console("Vertex " + newName + " already exists!");
+        } else {
+        	addVertex(relX(), relY(), newName);
+        }
+    }
+    
+    public void addVertexRandName() {
+    	String n = "1";
+    	while (graph.containsVertex(n))
+    		n = String.valueOf(Integer.valueOf(n)+1);
+    	addVertex(relX(), relY(), n);
     }
 
     private void addVertex(Point p, String newName) {
@@ -335,11 +389,8 @@ public class Drawing extends javax.swing.JPanel {
     }
 
     // x and y are not scaled here.
+    // x and y are assumed to be scaled i.e. relative
     private void addVertex(int x, int y, String newName) {
-        if (graph.containsVertex(newName)) {
-            gui.console("Vertex " + newName + " already exists!");
-            return;
-        }
         Point p = new Point(x, y);
         if (!coordToName.containsKey(p)) {
             coordToName.put(p, newName);
@@ -726,7 +777,6 @@ public class Drawing extends javax.swing.JPanel {
                                         residual.addEdge(ein.dest.name, ein.src.name, bottleneck);
                                         residual.updateEdgeCost(ein.src.name, ein.dest.name, ein.cost - bottleneck);
                                     }
-                                    System.out.println(">> Update " + u.prev.name + " " + u.name);
                                     graph.updateEdgeFlow(u.prev.name, u.name, bottleneck);
                                     break;
                                 }
@@ -942,7 +992,9 @@ public class Drawing extends javax.swing.JPanel {
             s += "," + dist;
         }
 
-        g2d.drawString(s, xx + SQUARE_SIZE / 2, yy + SQUARE_SIZE / 2);
+        if (showVertexName) {
+        	g2d.drawString(s, xx + SQUARE_SIZE / 2, yy + SQUARE_SIZE / 2);
+        }
     }
 
     private void drawEdge2(int x0, int y0, int x1, int y1, int cost, int flow, Color color) {
@@ -1038,6 +1090,14 @@ public class Drawing extends javax.swing.JPanel {
             drawVertex(relX(), relY(), "", -1, Color.GREEN);
         }
 
+        for (Vertex v : graph.getVertices()) {
+        	drawVertex(v.x, v.y, v.name, v.dist, v.vColor);
+        	for (Edge e : v.adj) {
+        		drawEdge2(e.src.x, e.src.y, e.dest.x, e.dest.y, e.cost, e.flow, e.eColor);
+        	}
+        }
+        
+        /*
         Iterator it = coordToName.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry) it.next();
@@ -1050,14 +1110,27 @@ public class Drawing extends javax.swing.JPanel {
                 drawEdge2(e.src.x, e.src.y, e.dest.x, e.dest.y, e.cost, e.flow, e.eColor);
             }
         }
+        */
 
     }
 
     public void save(String name) {
         try {
-            FileOutputStream fos = new FileOutputStream(name);
+        	System.out.println(graph.getVertexMap().size());
+        	FileOutputStream fos = new FileOutputStream(name);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(new GraphWrapper(coordToName, graph.getVertexMap()));
+            List<Vertex> vs = new ArrayList<Vertex>(graph.getVertices());
+            List<SerializableVertex> ll = new ArrayList<SerializableVertex>();
+            for (Vertex v : vs) {
+            	SerializableVertex sv = new SerializableVertex(
+            			v.x, v.y, v.name, v.adj.size());
+            	for (Edge e : v.adj) {
+            		sv.addAdjEdge(e.src.name, e.dest.name, e.cost);
+            	}
+            	ll.add(sv);
+            }
+            oos.writeObject(ll);
+            oos.flush();
             oos.close();
         } catch (Exception ex) {
             Logger.getLogger(Drawing.class.getName()).log(Level.SEVERE, null, ex);
@@ -1067,17 +1140,29 @@ public class Drawing extends javax.swing.JPanel {
     public void load(String name) {
         clearAll();
         try {
-            FileInputStream fis = new FileInputStream(name);
-            ObjectInput ois = new ObjectInputStream(fis);
-            GraphWrapper gw = (GraphWrapper) ois.readObject();
-            ois.close();
-
-            coordToName.clear();
+        	
+        	coordToName.clear();
             graph.clear();
-
-            coordToName = gw.getCoordToNameMap();
-            graph.useVertexMap(gw.getVertexMap());
-
+        	
+        	FileInputStream fis = new FileInputStream(name);
+            ObjectInput ois = new ObjectInputStream(fis);
+            List<SerializableVertex> l = (List<SerializableVertex>)ois.readObject(); 
+            ois.close();
+            
+            for (SerializableVertex v : l) {
+            	graph.addVertex(v.x, v.y, v.name);
+            }
+            
+            for (SerializableVertex v : l) {
+            	for (Edge e : v.adj) {
+            		graph.addEdge(e.src.name, e.dest.name, e.cost);
+            	}
+            }
+            
+            for (Vertex v : graph.getVertices()) {
+            	coordToName.put(new Point(v.x, v.y), v.name);
+            }
+            
             repaint();
 
         } catch (Exception ex) {
@@ -1217,36 +1302,6 @@ public class Drawing extends javax.swing.JPanel {
             System.out.print(i + " ");
         }
         System.out.println();
-    }
-
-    private static class GraphWrapper implements Serializable {
-
-        private HashMap<Point, String> wCoordToName;
-        private HashMap<String, Vertex> wVertexMap;
-
-        public GraphWrapper(HashMap<Point, String> wCoordToName, HashMap<String, Vertex> wVertexMap) {
-            this.wCoordToName = new HashMap<Point, String>();
-            this.wVertexMap = new HashMap<String, Vertex>();
-
-            Iterator it = wCoordToName.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pairs = (Map.Entry) it.next();
-                this.wCoordToName.put((Point) pairs.getKey(), (String) pairs.getValue());
-            }
-            it = wVertexMap.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry pairs = (Map.Entry) it.next();
-                this.wVertexMap.put((String) pairs.getKey(), (Vertex) pairs.getValue());
-            }
-        }
-
-        public HashMap<Point, String> getCoordToNameMap() {
-            return wCoordToName;
-        }
-
-        public HashMap<String, Vertex> getVertexMap() {
-            return wVertexMap;
-        }
     }
 
     /**
