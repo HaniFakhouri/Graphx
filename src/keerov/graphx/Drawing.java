@@ -659,7 +659,7 @@ public class Drawing extends javax.swing.JPanel {
 
                         for (Edge e : v.adj) {
                             Vertex w = e.dest;
-                            if (!w.visited && e.flow < e.cost) {
+                            if (!w.visited) {
                                 w.visited = true;
                                 w.prev = v;
                                 q.add(w);
