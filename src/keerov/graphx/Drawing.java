@@ -6,6 +6,7 @@ import keerov.graphx.Graph.Vertex;
 import keerov.graphx.ds.PairingHeap;
 import keerov.graphx.ds.Stack;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -48,6 +49,7 @@ public class Drawing extends javax.swing.JPanel {
     private static final int STATE_DROPPED = 1;
 
     private static int GUI_EXECUTION_PAUSE = 1000;
+    private static int GUI_RESULT_PAUSE = 10000;
 
     private Graphics g;
     private int x0, y0, x1, y1;
@@ -67,6 +69,8 @@ public class Drawing extends javax.swing.JPanel {
     int width, height;
 
     private Graph graph;
+    
+    private Thread currentThread;
 
     /**
      * Creates new form Drawing
@@ -290,9 +294,17 @@ public class Drawing extends javax.swing.JPanel {
     public void updateGUIExecutionPause(int pause) {
         GUI_EXECUTION_PAUSE = pause;
     }
+    
+    public void updateGUIResultPause(int pause) {
+    	GUI_RESULT_PAUSE = pause;
+    }
 
     public int getGUIExecutionPause() {
         return GUI_EXECUTION_PAUSE;
+    }
+    
+    public int getGUIResultPause() {
+    	return GUI_RESULT_PAUSE;
     }
 
     public void changeScale(int newScale) {
@@ -354,25 +366,33 @@ public class Drawing extends javax.swing.JPanel {
             graph.addEdge(source, dest, cost);
         }
     }
+    
+    public void stopExecution() {
+    	if (currentThread != null)
+    		currentThread.interrupt();
+    	currentThread = null;
+    	clearAll();
+    	repaint();
+    }
 
     public void BFS() {
-        (new BFS()).start();
+    	(currentThread = new BFS()).start();;
     }
 
     public void DFS() {
-        (new DFS()).start();
+        (currentThread = new DFS()).start();
     }
 
     public void Dijkstra(String s, String d) {
-        (new Dijkstra(s, d)).start();
+        (currentThread = new Dijkstra(s, d)).start();
     }
 
     public void Kruskal_MST() {
-        (new Kruskal_MST()).start();
+        (currentThread = new Kruskal_MST()).start();
     }
 
     public void FordFulkerson_MaxFlow(boolean detectPerfectMatching) {
-        (new MaxFlow_FordFulkerson(detectPerfectMatching)).start();
+        (currentThread = new MaxFlow_FordFulkerson(detectPerfectMatching)).start();
     }
 
     private class BFS extends Thread {
@@ -509,9 +529,17 @@ public class Drawing extends javax.swing.JPanel {
 
                 for (int i = shortestPath.size() - 1; i >= 0; i--) {
                     shortestPath.get(i).vColor = Color.RED;
+                    for (Edge e : shortestPath.get(i).adj) {
+                    	if (i-1 >= 0 && e.dest.equals(shortestPath.get(i-1))) {
+                    		e.eColor = Color.RED;
+                    		break;
+                    	}
+                    }
                     repaint();
                     sleep(GUI_EXECUTION_PAUSE);
                 }
+                
+                sleep(GUI_RESULT_PAUSE);
 
                 clearAll();
                 repaint();
@@ -570,7 +598,7 @@ public class Drawing extends javax.swing.JPanel {
                 }
 
                 repaint();
-                sleep(5000);
+                sleep(GUI_RESULT_PAUSE);
 
             } catch (Exception e) {
 
@@ -611,7 +639,7 @@ public class Drawing extends javax.swing.JPanel {
 
                     residual.clear();
                     graph.resetGraphColors();
-
+                    
                     // Perform a BFS and update edges in the residual graph
                     Vertex source_v = residual.getVertex(source);
                     Queue<Vertex> q = new LinkedList<Vertex>();
@@ -631,7 +659,7 @@ public class Drawing extends javax.swing.JPanel {
 
                         for (Edge e : v.adj) {
                             Vertex w = e.dest;
-                            if (!w.visited) {
+                            if (!w.visited && e.flow < e.cost) {
                                 w.visited = true;
                                 w.prev = v;
                                 q.add(w);
@@ -672,7 +700,7 @@ public class Drawing extends javax.swing.JPanel {
                         }
                         u = u.prev;
                     }
-
+                    
                     u = residual.getVertex(sink);
                     while (u != null) {
                         graph.getVertex(u.name).vColor = Color.GREEN;
@@ -698,20 +726,31 @@ public class Drawing extends javax.swing.JPanel {
                                         residual.addEdge(ein.dest.name, ein.src.name, bottleneck);
                                         residual.updateEdgeCost(ein.src.name, ein.dest.name, ein.cost - bottleneck);
                                     }
+                                    System.out.println(">> Update " + u.prev.name + " " + u.name);
                                     graph.updateEdgeFlow(u.prev.name, u.name, bottleneck);
                                     break;
                                 }
                             }
                         }
+                        u = u.prev;
                         if (u.name.equals(source)) {
+                        	graph.getVertex(u.name).vColor = Color.GREEN;
+                            gui.info(u.name, -1, -1, -1, true, null, null);
+                            repaint();
+                            sleep(GUI_EXECUTION_PAUSE);
                             break;
                         }
-                        u = u.prev;
                     }
+                    System.out.println();
                 }
 
                 graph.resetGraphColors();
                 graph.getVertex(source).vColor = Color.RED;
+                for (Vertex v : graph.getVertices()) {
+                	for (Edge e : v.adj)
+                		if (e.flow > 0)
+                			e.eColor = Color.RED;
+                }
                 repaint();
 
                 if (detectPerfectMatching) {
@@ -738,7 +777,7 @@ public class Drawing extends javax.swing.JPanel {
                     }
                 }
 
-                sleep(20000);
+                sleep(GUI_RESULT_PAUSE);
 
             } catch (Exception ex) {
                 Logger.getLogger(Drawing.class.getName()).log(Level.SEVERE, null, ex);
@@ -752,7 +791,7 @@ public class Drawing extends javax.swing.JPanel {
     }
 
     public void isBipartite() {
-        (new IsBipartite()).start();
+        (currentThread = new IsBipartite()).start();
     }
 
     private class IsBipartite extends Thread {
@@ -822,7 +861,7 @@ public class Drawing extends javax.swing.JPanel {
                 gui.console(">> IS BIPARTITE");
             }
             try {
-                sleep(5000);
+            	sleep(GUI_RESULT_PAUSE);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Drawing.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -910,6 +949,10 @@ public class Drawing extends javax.swing.JPanel {
         Graphics2D g2d = (Graphics2D) g;
 
         g2d.setColor(color);
+        if (color.equals(Color.RED))
+        	g2d.setStroke(new BasicStroke(3));
+        else
+        	g2d.setStroke(new BasicStroke(1));
 
         x0 = x0 * SQUARE_SIZE + SQUARE_SIZE / 2;
         y0 = y0 * SQUARE_SIZE + SQUARE_SIZE / 2;
