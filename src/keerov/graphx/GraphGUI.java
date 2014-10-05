@@ -82,7 +82,8 @@ public class GraphGUI extends javax.swing.JFrame {
 	private void initComponents() {
 
 		btnClearGraph = new javax.swing.JButton();
-		btnDone = new javax.swing.JButton();
+		btnEdit = new javax.swing.JButton();
+		btnAStar = new javax.swing.JButton();
 		btnapplyvertexname = new javax.swing.JButton();
 		jLabel1 = new javax.swing.JLabel();
 		txtVertexName = new javax.swing.JTextField();
@@ -125,7 +126,7 @@ public class GraphGUI extends javax.swing.JFrame {
 		jMenu1 = new javax.swing.JMenu();
 		menuSave = new javax.swing.JMenuItem();
 		menuLoad = new javax.swing.JMenuItem();
-		menuDrawAxis = new javax.swing.JMenuItem();
+		menuShowGrid = new javax.swing.JMenuItem();
 		menuScale = new javax.swing.JMenuItem();
 		exitMenuItem = new javax.swing.JMenuItem();
 		jMenu2 = new javax.swing.JMenu();
@@ -134,7 +135,7 @@ public class GraphGUI extends javax.swing.JFrame {
 		menuExecutionPause = new javax.swing.JMenuItem();
 		menuResultPause = new javax.swing.JMenuItem();
 		menuStopExec = new javax.swing.JMenuItem();
-		menuCreateMaze = new javax.swing.JMenuItem();
+		menuCreateMap = new javax.swing.JMenuItem();
 		jMenu3 = new javax.swing.JMenu();
 		menuDeleteVertex = new javax.swing.JMenuItem();
 		btnMarkVisited = new javax.swing.JMenuItem();
@@ -150,10 +151,10 @@ public class GraphGUI extends javax.swing.JFrame {
 			}
 		});
 
-		btnDone.setFont(new java.awt.Font("DejaVu Sans", 0, 12)); // NOI18N
-		btnDone.setText("Edit Graph");
-		btnDone.setAlignmentY(0.0F);
-		btnDone.addActionListener(new java.awt.event.ActionListener() {
+		btnEdit.setFont(new java.awt.Font("DejaVu Sans", 0, 12)); // NOI18N
+		btnEdit.setText("Edit Graph");
+		btnEdit.setAlignmentY(0.0F);
+		btnEdit.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				btnDoneActionPerformed(evt);
 			}
@@ -378,6 +379,15 @@ public class GraphGUI extends javax.swing.JFrame {
 		txtInfoVisited.setFont(new java.awt.Font("DejaVu Sans", 0, 12)); // NOI18N
 		txtInfoVisited.setFocusable(false);
 
+		btnAStar.setFont(new java.awt.Font("DejaVu Sans", 0, 12)); // NOI18N
+        btnAStar.setText("A* Search");
+        btnAStar.setAlignmentY(0.0F);
+        btnAStar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAStarActionPerformed(evt);
+            }
+        });
+		
 		javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
 		jPanel3.setLayout(jPanel3Layout);
 		jPanel3Layout.setHorizontalGroup(
@@ -450,25 +460,28 @@ public class GraphGUI extends javax.swing.JFrame {
 				.addComponent(btnFordFulkerson, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 				.addComponent(btnIsBipartite, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 				.addGroup(pnlInfoLayout.createSequentialGroup()
-						.addComponent(btnBFS)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-						.addComponent(btnDFS, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-						.addGroup(pnlInfoLayout.createSequentialGroup()
-								.addContainerGap()
+						.addContainerGap()
+						.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 								.addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addContainerGap())
 								.addGroup(pnlInfoLayout.createSequentialGroup()
 										.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+												.addComponent(chckVertexName)
+												.addComponent(chckFlow))
+												.addGap(0, 0, Short.MAX_VALUE))
 												.addGroup(pnlInfoLayout.createSequentialGroup()
+														.addComponent(chckDirected)
+														.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 														.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(chckDirected)
-																.addComponent(chckFlow))
-																.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-																		.addComponent(chckCost)
-																		.addComponent(chckDist)))
-																		.addComponent(chckVertexName))
-																		.addGap(0, 0, Short.MAX_VALUE))
+																.addComponent(chckDist)
+																.addComponent(chckCost))
+																.addGap(0, 0, Short.MAX_VALUE)))
+																.addContainerGap())
+																.addGroup(pnlInfoLayout.createSequentialGroup()
+																		.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+																				.addComponent(btnAStar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+																				.addComponent(btnBFS, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+																				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																				.addComponent(btnDFS, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
 				);
 		pnlInfoLayout.setVerticalGroup(
 				pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -485,6 +498,8 @@ public class GraphGUI extends javax.swing.JFrame {
 								.addComponent(btnBFS)
 								.addComponent(btnDFS))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+								.addComponent(btnAStar)
+								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 								.addGroup(pnlInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 										.addComponent(chckDirected)
 										.addComponent(chckCost))
@@ -494,7 +509,7 @@ public class GraphGUI extends javax.swing.JFrame {
 												.addComponent(chckDist))
 												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 												.addComponent(chckVertexName)
-												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
+												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 												.addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
 												.addContainerGap())
 				);
@@ -538,14 +553,14 @@ public class GraphGUI extends javax.swing.JFrame {
 		});
 		jMenu1.add(menuLoad);
 
-		menuDrawAxis.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
-		menuDrawAxis.setText("Show Axis");
-		menuDrawAxis.addActionListener(new java.awt.event.ActionListener() {
+		menuShowGrid.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
+		menuShowGrid.setText("Show Grid");
+		menuShowGrid.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				menuDrawAxisActionPerformed(evt);
 			}
 		});
-		jMenu1.add(menuDrawAxis);
+		jMenu1.add(menuShowGrid);
 
 		menuScale.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
 		menuScale.setText("Scale");
@@ -609,13 +624,14 @@ public class GraphGUI extends javax.swing.JFrame {
 		});
 		jMenu2.add(menuStopExec);
 
-		menuCreateMaze.setText("Create Maze");
-		menuCreateMaze.addActionListener(new java.awt.event.ActionListener() {
+		menuCreateMap.setText("Create Map");
+		menuCreateMap.setEnabled(false);
+		menuCreateMap.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				menuCreateVerticesActionPerformed(evt);
 			}
 		});
-		jMenu2.add(menuCreateMaze);
+		jMenu2.add(menuCreateMap);
 
 		jMenuBar1.add(jMenu2);
 
@@ -652,7 +668,7 @@ public class GraphGUI extends javax.swing.JFrame {
 								.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
 										.addComponent(btnClearGraph)
 										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-										.addComponent(btnDone, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+										.addComponent(btnEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
 										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 										.addComponent(jLabel1)
 										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -682,7 +698,7 @@ public class GraphGUI extends javax.swing.JFrame {
 								.addGroup(layout.createSequentialGroup()
 										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 												.addComponent(btnClearGraph)
-												.addComponent(btnDone)
+												.addComponent(btnEdit)
 												.addComponent(jLabel1)
 												.addComponent(txtVertexName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
 												.addComponent(btnapplyvertexname)
@@ -733,16 +749,18 @@ public class GraphGUI extends javax.swing.JFrame {
 	}
 
 	private void btnDoneActionPerformed(java.awt.event.ActionEvent evt) {
-		String txt = btnDone.getText();
+		String txt = btnEdit.getText();
 		if (txt.equals("Done")) {
-			btnDone.setText("Edit Graph");
+			menuCreateMap.setEnabled(false);
+			btnEdit.setText("Edit Graph");
 			btnapplyvertexname.setEnabled(false);
 			btnAddCost.setEnabled(false);
 			txtVertexName.setEnabled(false);
 			txtEdgeCost.setEnabled(false);
 			drawing.done();
 		} else {
-			btnDone.setText("Done");
+			menuCreateMap.setEnabled(true);
+			btnEdit.setText("Done");
 			btnapplyvertexname.setEnabled(true);
 			btnAddCost.setEnabled(true);
 			txtVertexName.setEnabled(true);
@@ -808,10 +826,10 @@ public class GraphGUI extends javax.swing.JFrame {
 	private void menuDrawAxisActionPerformed(java.awt.event.ActionEvent evt) {
 		if (!showAxis) {
 			drawing.drawAxis(true);
-			menuDrawAxis.setText("Hide Axis");
+			menuShowGrid.setText("Hide Axis");
 		} else {
 			drawing.drawAxis(false);
-			menuDrawAxis.setText("Show Axis");
+			menuShowGrid.setText("Show Axis");
 		}
 		showAxis = !showAxis;
 	}
@@ -854,6 +872,24 @@ public class GraphGUI extends javax.swing.JFrame {
 	private void btnDFSActionPerformed(java.awt.event.ActionEvent evt) {
 		drawing.DFS();
 	}
+	
+	private void btnAStarActionPerformed(java.awt.event.ActionEvent evt) {                                         
+		JTextField src = new JTextField(5);
+		JTextField dst = new JTextField(5);
+
+		JPanel myPanel = new JPanel();
+		myPanel.add(new JLabel("Source:"));
+		myPanel.add(src);
+		myPanel.add(Box.createHorizontalStrut(15));
+		myPanel.add(new JLabel("Destination:"));
+		myPanel.add(dst);
+
+		int result = JOptionPane.showConfirmDialog(null, myPanel,
+				"Please Enter Source and Destination", JOptionPane.OK_CANCEL_OPTION);
+		if (result == JOptionPane.OK_OPTION) {
+			drawing.AStar(src.getText(), dst.getText());
+		}
+    }
 
 	private void chckDirectedActionPerformed(java.awt.event.ActionEvent evt) {
 		drawing.setDirected(chckDirected.isSelected());
@@ -914,24 +950,12 @@ public class GraphGUI extends javax.swing.JFrame {
 		drawing.stopExecution();
 	}
 
-	private void menuCreateVerticesActionPerformed(java.awt.event.ActionEvent evt) {                                                   
-		JTextField w = new JTextField(5);
-		JTextField h = new JTextField(5);
-
-		JPanel myPanel = new JPanel();
-		myPanel.add(new JLabel("Horizontal:"));
-		myPanel.add(w);
-		myPanel.add(Box.createHorizontalStrut(15)); // a spacer
-		myPanel.add(new JLabel("Vertical:"));
-		myPanel.add(h);
-
-		int result = JOptionPane.showConfirmDialog(null, myPanel,
-				"Please Enter Horizontal and Vertical sizes", JOptionPane.OK_CANCEL_OPTION);
-		if (result == JOptionPane.OK_OPTION) {
-			drawing.createMaze(
-					Integer.valueOf(w.getText()), 
-					Integer.valueOf(h.getText()));
-		}
+	private void menuCreateVerticesActionPerformed(java.awt.event.ActionEvent evt) {                                                   		
+		String size = JOptionPane.showInputDialog(null,
+				"Enter Map Size",
+				"Enter Map Size",
+				JOptionPane.QUESTION_MESSAGE);
+		drawing.createMap(Integer.valueOf(size));
 	}
 
 	private void txtVertexNameKeyPressed(java.awt.event.KeyEvent evt) {                                         
@@ -1027,10 +1051,11 @@ public class GraphGUI extends javax.swing.JFrame {
 	private javax.swing.JButton btnClearGraph;
 	private javax.swing.JButton btnDFS;
 	private javax.swing.JButton btnDijkstra;
-	private javax.swing.JButton btnDone;
+	private javax.swing.JButton btnEdit;
 	private javax.swing.JButton btnFordFulkerson;
 	private javax.swing.JButton btnIsBipartite;
 	private javax.swing.JButton btnMST;
+	private javax.swing.JButton btnAStar;
 	private javax.swing.JMenuItem btnMakeComplete;
 	private javax.swing.JMenuItem btnMarkVisited;
 	private javax.swing.JButton btnapplyvertexname;
@@ -1058,9 +1083,9 @@ public class GraphGUI extends javax.swing.JFrame {
 	private javax.swing.JScrollPane jScrollPane1;
 	private javax.swing.JScrollPane jScrollPane2;
 	private javax.swing.JMenuItem menuCreateRandomGraph;
-	private javax.swing.JMenuItem menuCreateMaze;
+	private javax.swing.JMenuItem menuCreateMap;
 	private javax.swing.JMenuItem menuDeleteVertex;
-	private javax.swing.JMenuItem menuDrawAxis;
+	private javax.swing.JMenuItem menuShowGrid;
 	private javax.swing.JMenuItem menuExecutionPause;
 	private javax.swing.JMenuItem menuResultPause;
 	private javax.swing.JMenuItem menuLoad;

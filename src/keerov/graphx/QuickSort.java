@@ -7,7 +7,7 @@ public class QuickSort {
     private static final int CUTOFF = 5;
     private static Comparator cmp;
 
-    public void setComparator(Comparator cmp) {
+    public void useComparator(Comparator cmp) {
         this.cmp = cmp;
     }
 

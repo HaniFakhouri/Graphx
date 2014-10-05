@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -370,7 +371,7 @@ public class Graph implements Serializable {
 
 	}
 	
-	public static class Vertex implements Serializable {
+	public static class Vertex implements Serializable, Comparable<Vertex> {
 
 		private static final long serialVersionUID = 1L;
 		public String name;
@@ -384,7 +385,11 @@ public class Graph implements Serializable {
 		public Color vColor = Color.BLUE;
 		public int disjointSetIndex;
 		public Position pos;
-
+		
+		// A* specific variables
+		public int f;
+		public int g;
+		
 		public Vertex(String name) {
 			this.name = name;
 			adj = new ArrayList<Edge>();
@@ -400,11 +405,57 @@ public class Graph implements Serializable {
 			dist = 999;
 			disjointSetIndex = 0;
 			pos = null;
+			
+			f = -1;
+			g = Integer.MAX_VALUE;
+			
 			for (Edge e : adj) {
 				e.clear();
 			}
 			for (Edge e : adjEntering) {
 				e.clear();
+			}
+		}
+		
+		// Used in A* search
+		public int heuristicDistanceTo(Vertex v) {
+			// a very simple diagonal heuristic
+			double xx = Math.abs(this.x - v.x)*Math.abs(this.x - v.x);
+			double yy = Math.abs(this.y - v.y)*Math.abs(this.y - v.y);
+			return (int)(Math.sqrt(xx+yy));
+		}
+		
+		@Override
+		public String toString() {
+			return name;
+		}
+
+		@Override
+		public int compareTo(Vertex v) {
+			return 0;
+		}
+		
+		@Override
+		public int hashCode() {
+			int h = 0;
+			for (char c : name.toCharArray())
+				h += (int)c;
+			return h;
+		}
+		
+		@Override
+		public boolean equals(Object v) {
+			return ((Vertex)v).name.equalsIgnoreCase(name);
+		}
+		
+		public static class AStarComparator implements Comparator<Vertex> {
+			@Override
+			public int compare(Vertex v1, Vertex v2) {
+				if (v1.f > v2.f)
+					return 1;
+				if (v1.f < v2.f)
+					return -1;
+				return 0;
 			}
 		}
 

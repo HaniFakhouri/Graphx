@@ -12,7 +12,13 @@ public class Main {
      */
     public static void main(String[] args) {
         GraphGUI gv = new GraphGUI();
-        gv.setVisible(true);
+        gv.setVisible(true);    	
     }
     
 }
+
+
+
+
+
+
