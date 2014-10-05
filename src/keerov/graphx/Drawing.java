@@ -1,8 +1,5 @@
 package keerov.graphx;
 
-import keerov.graphx.Graph.*;
-import keerov.graphx.ds.*;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -18,6 +15,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -28,14 +26,21 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import keerov.graphx.Graph.Edge;
+import keerov.graphx.Graph.SerializableVertex;
+import keerov.graphx.Graph.Vertex;
+import keerov.graphx.ds.DisjointSet;
+import keerov.graphx.ds.PairingHeap;
+import keerov.graphx.ds.Stack;
+
 /**
-*
-* @author Keerov
-* thekeerov@gmail.com
-*/
+ *
+ * @author Keerov
+ * thekeerov@gmail.com
+ */
 public class Drawing extends javax.swing.JPanel {
 
-	private static final Color ONE = Color.RED;
+    private static final Color ONE = Color.RED;
     private static final Color TWO = Color.GREEN;
     private static final int STATE_IDLE = -1;
     private static final int STATE_PRESSED = 0;
@@ -44,13 +49,14 @@ public class Drawing extends javax.swing.JPanel {
     private static int GUI_EXECUTION_PAUSE = 1000;
     private static int GUI_RESULT_PAUSE = 10000;
     private static int SQUARE_SIZE = 20;
-    
+    private static int FONT_SIZE = (int) (SQUARE_SIZE * 0.7);
+
     private Graphics g;
     private int x0, y0, x1, y1;
     private int click_state;
     private int current_x, current_y;
     private HashMap<Point, String> coordToName = new HashMap<Point, String>();
-    private GraphGUI gui;
+    private GraphXGUI gui;
     private boolean edit;
 
     private boolean doFillVertex;
@@ -64,13 +70,13 @@ public class Drawing extends javax.swing.JPanel {
     int width, height;
 
     private Graph graph;
-    
-    private Thread currentThread;
+
+    private DrawingThread currentThread;
 
     /**
      * Creates new form Drawing
      */
-    public Drawing(GraphGUI gui) {
+    public Drawing(GraphXGUI gui) {
         initComponents();
 
         graph = new Graph();
@@ -108,6 +114,9 @@ public class Drawing extends javax.swing.JPanel {
                         x1 = e.getX();
                         y1 = e.getY();
                         click_state = STATE_DROPPED;
+                    }
+                    if (e.getClickCount() == 2) {
+                        addVertexRandName();
                     }
                 }
 
@@ -170,6 +179,10 @@ public class Drawing extends javax.swing.JPanel {
         });
 
     }
+    
+    public boolean isExecuting() {
+        return currentThread != null;
+    }
 
     public void clearGraph() {
         current_x = -1;
@@ -192,10 +205,10 @@ public class Drawing extends javax.swing.JPanel {
         showVertexDist = show;
         repaint();
     }
-    
+
     public void showVertexName(boolean show) {
-    	showVertexName = show;
-    	repaint();
+        showVertexName = show;
+        repaint();
     }
 
     private Vertex getClickedVertex(int currentX, int currentY) {
@@ -242,47 +255,80 @@ public class Drawing extends javax.swing.JPanel {
         getClickedVertex();
         repaint();
     }
-    
-    public void createMaze(int w, int h) {
-    	if (!edit) {
-    		gui.console("Click \"Edit Graph\" button");
-    		return;
-    	}
-    	
-    	clearGraph();
-    	
-    	boolean directed = graph.isDirected();
-    	graph.setDirected(false);
-    	
-    	for (int j=1; j<h+1; j++) {
-    		for (int i=1; i<w; i++) {
-    			
-    			Random rand = new Random();
-    			int max = w*h;
-    			int min = 1;
-    			int r = rand.nextInt((max - min) + 1) + min;
-    			
-        		Point p1 = new Point(i, j);
-        		Point p2 = new Point(i+1, j);
-        		addVertex(p1, String.valueOf(i+""+j+"_"+r));
-        		addVertex(p2, String.valueOf((i+1)+""+(j+1)+"_"+r));
-        		addEdge(p1, p2, 1);
-        	}
-    	}
-    	
-    	for (int j=1; j<w+1; j++) {
-    		for (int i=1; i<h+1; i++) {
-        		Point p1 = new Point(j, i);
-        		Point p2 = new Point(j, i+1);
-        		Point p3 = new Point(j+1, i+1);
-        		addEdge(p1, p2, 1);
-        		addEdge(p1, p3, 1);
-        	}
-    	}
-    	
-    	graph.setDirected(directed);
-    	
-    	repaint();
+
+    private String getRandomName() {
+        String n = "1";
+        while (graph.containsVertex(n)) {
+            n = String.valueOf(Integer.valueOf(n) + 1);
+        }
+        return n;
+    }
+
+    private void createAroundVertex(Point p) {
+        addVertex(p, getRandomName());
+
+        Point p1 = new Point(p.x - 1, p.y - 1);
+        Point p2 = new Point(p.x, p.y - 1);
+        Point p3 = new Point(p.x + 1, p.y - 1);
+        Point p4 = new Point(p.x + 1, p.y);
+        Point p5 = new Point(p.x - 1, p.y);
+        Point p6 = new Point(p.x, p.y + 1);
+        Point p7 = new Point(p.x + 1, p.y + 1);
+        Point p8 = new Point(p.x - 1, p.y + 1);
+
+        addVertex(p1, getRandomName());
+        addVertex(p2, getRandomName());
+        addVertex(p3, getRandomName());
+        addVertex(p4, getRandomName());
+        addVertex(p5, getRandomName());
+        addVertex(p6, getRandomName());
+        addVertex(p7, getRandomName());
+        addVertex(p8, getRandomName());
+
+        addEdge(p, p1, 1);
+        addEdge(p, p2, 1);
+        addEdge(p, p3, 1);
+        addEdge(p, p4, 1);
+        addEdge(p, p5, 1);
+        addEdge(p, p6, 1);
+        addEdge(p, p7, 1);
+        addEdge(p, p8, 1);
+    }
+
+    public void createMap(int size) {
+        if (!edit) {
+            gui.console("Click \"Edit Graph\" button");
+            return;
+        }
+
+        clearGraph();
+
+        boolean directed = graph.isDirected();
+        graph.setDirected(false);
+
+        int center_x = rel(getWidth() / 2);
+        int center_y = rel(getHeight() / 2);
+
+        Point p = new Point(center_x, center_y);
+        createAroundVertex(p);
+
+        for (int i = 1; i < size; i++) {
+            createAroundVertex(new Point(p.x - i, p.y));
+            createAroundVertex(new Point(p.x + i, p.y));
+            for (int j = 1; j < size / 2; j++) {
+                createAroundVertex(new Point(p.x - i, p.y + j));
+                createAroundVertex(new Point(p.x + i, p.y - j));
+                createAroundVertex(new Point(p.x + i, p.y + j));
+                createAroundVertex(new Point(p.x - i, p.y - j));
+            }
+        }
+        for (int i = 1; i < size / 2; i++) {
+            createAroundVertex(new Point(p.x, p.y + i));
+            createAroundVertex(new Point(p.x, p.y - i));
+        }
+
+        graph.setDirected(directed);
+        repaint();
     }
 
     public void makeComplete() {
@@ -337,21 +383,22 @@ public class Drawing extends javax.swing.JPanel {
     public void updateGUIExecutionPause(int pause) {
         GUI_EXECUTION_PAUSE = pause;
     }
-    
+
     public void updateGUIResultPause(int pause) {
-    	GUI_RESULT_PAUSE = pause;
+        GUI_RESULT_PAUSE = pause;
     }
 
     public int getGUIExecutionPause() {
         return GUI_EXECUTION_PAUSE;
     }
-    
+
     public int getGUIResultPause() {
-    	return GUI_RESULT_PAUSE;
+        return GUI_RESULT_PAUSE;
     }
 
     public void changeScale(int newScale) {
         SQUARE_SIZE = newScale;
+        FONT_SIZE = (int) (SQUARE_SIZE * 0.7);
         repaint();
     }
 
@@ -370,25 +417,26 @@ public class Drawing extends javax.swing.JPanel {
     }
 
     public void addVertex(String newName) {
-    	if (graph.containsVertex(newName)) {
+        if (graph.containsVertex(newName)) {
             gui.console("Vertex " + newName + " already exists!");
         } else {
-        	addVertex(relX(), relY(), newName);
+            addVertex(relX(), relY(), newName);
         }
     }
-    
+
     public void addVertexRandName() {
-    	String n = "1";
-    	while (graph.containsVertex(n))
-    		n = String.valueOf(Integer.valueOf(n)+1);
-    	addVertex(relX(), relY(), n);
+        String n = "1";
+        while (graph.containsVertex(n)) {
+            n = String.valueOf(Integer.valueOf(n) + 1);
+        }
+        addVertex(relX(), relY(), n);
     }
 
     private void addVertex(Point p, String newName) {
         addVertex(p.x, p.y, newName);
     }
 
-    // x and y are not scaled here.
+	// x and y are not scaled here.
     // x and y are assumed to be scaled i.e. relative
     private void addVertex(int x, int y, String newName) {
         Point p = new Point(x, y);
@@ -417,17 +465,19 @@ public class Drawing extends javax.swing.JPanel {
             graph.addEdge(source, dest, cost);
         }
     }
-    
+
     public void stopExecution() {
-    	if (currentThread != null)
-    		currentThread.interrupt();
-    	currentThread = null;
-    	clearAll();
-    	repaint();
+        if (currentThread != null) {
+            currentThread.interrupt();
+        }
+        currentThread = null;
+        clearAll();
+        repaint();
+        gui.executingDisableMenus(true);
     }
 
     public void BFS() {
-    	(currentThread = new BFS()).start();;
+        (currentThread = new BFS()).start();;
     }
 
     public void DFS() {
@@ -446,10 +496,14 @@ public class Drawing extends javax.swing.JPanel {
         (currentThread = new MaxFlow_FordFulkerson(detectPerfectMatching)).start();
     }
 
-    private class BFS extends Thread {
+    public void AStar(String source, String destination) {
+        (currentThread = new AStar(source, destination)).start();
+    }
+
+    private class BFS extends DrawingThread {
 
         @Override
-        public void run() {
+        public void work() {
             try {
                 Vertex v = getClickedVertex();
                 if (v == null) {
@@ -479,11 +533,20 @@ public class Drawing extends javax.swing.JPanel {
             repaint();
         }
     }
-
-    private class DFS extends Thread {
-
+    
+    private abstract class DrawingThread extends Thread {
         @Override
         public void run() {
+            gui.executingDisableMenus(false);
+            work();
+        }
+        abstract void work();
+    }
+
+    private class DFS extends DrawingThread {
+
+        @Override
+        public void work() {
             try {
                 Vertex v = getClickedVertex();
                 if (v == null) {
@@ -512,7 +575,7 @@ public class Drawing extends javax.swing.JPanel {
         }
     }
 
-    private class Dijkstra extends Thread {
+    private class Dijkstra extends DrawingThread {
 
         String source, dest;
 
@@ -522,7 +585,7 @@ public class Drawing extends javax.swing.JPanel {
         }
 
         @Override
-        public void run() {
+        public void work() {
 
             try {
 
@@ -539,7 +602,10 @@ public class Drawing extends javax.swing.JPanel {
                 v.pos = ph.insert(new Path(v, v.dist));
                 int nodesSeen = 0;
 
+                int nrSteps = 0;
+
                 while (!ph.isEmpty() && nodesSeen < graph.size()) {
+
                     Path p = ph.deleteMin();
                     v = p.dest;
                     if (v.visited) {
@@ -549,6 +615,7 @@ public class Drawing extends javax.swing.JPanel {
                     nodesSeen++;
                     v.vColor = Color.RED;
                     for (Edge e : v.adj) {
+                        nrSteps++;
                         Vertex w = e.dest;
                         int uwv = e.cost;
                         if (w.dist > uwv + v.dist) {
@@ -566,7 +633,9 @@ public class Drawing extends javax.swing.JPanel {
                         }
                     }
                 }
-                sleep(3000);
+
+                gui.console("Path cost: " + graph.getVertex(dest).dist);
+                gui.console("Steps: " + nrSteps);
 
                 graph.resetGraphColors();
 
@@ -581,15 +650,15 @@ public class Drawing extends javax.swing.JPanel {
                 for (int i = shortestPath.size() - 1; i >= 0; i--) {
                     shortestPath.get(i).vColor = Color.RED;
                     for (Edge e : shortestPath.get(i).adj) {
-                    	if (i-1 >= 0 && e.dest.equals(shortestPath.get(i-1))) {
-                    		e.eColor = Color.RED;
-                    		break;
-                    	}
+                        if (i - 1 >= 0 && e.dest.equals(shortestPath.get(i - 1))) {
+                            e.eColor = Color.RED;
+                            break;
+                        }
                     }
                     repaint();
                     sleep(GUI_EXECUTION_PAUSE);
                 }
-                
+
                 sleep(GUI_RESULT_PAUSE);
 
                 clearAll();
@@ -601,10 +670,10 @@ public class Drawing extends javax.swing.JPanel {
         }
     }
 
-    private class Kruskal_MST extends Thread {
+    private class Kruskal_MST extends DrawingThread {
 
         @Override
-        public void run() {
+        public void work() {
             try {
 
                 doFillVertex = true;
@@ -624,10 +693,8 @@ public class Drawing extends javax.swing.JPanel {
                 Edge[] edges = new Edge[edges_list.size()];
                 edges = edges_list.toArray(edges);
 
-                //Arrays.sort(edges, new Edge.EdgeComparator());
-                
                 QuickSort qs = new QuickSort();
-                qs.setComparator(new Edge.EdgeComparator());
+                qs.useComparator(new Edge.EdgeComparator());
                 qs.sort(edges);
 
                 edges_list.clear();
@@ -659,7 +726,7 @@ public class Drawing extends javax.swing.JPanel {
         }
     }
 
-    private class MaxFlow_FordFulkerson extends Thread {
+    private class MaxFlow_FordFulkerson extends DrawingThread {
 
         private boolean detectPerfectMatching;
 
@@ -668,7 +735,7 @@ public class Drawing extends javax.swing.JPanel {
         }
 
         @Override
-        public void run() {
+        public void work() {
 
             doFillVertex = true;
 
@@ -690,7 +757,7 @@ public class Drawing extends javax.swing.JPanel {
 
                     residual.clear();
                     graph.resetGraphColors();
-                    
+
                     // Perform a BFS and update edges in the residual graph
                     Vertex source_v = residual.getVertex(source);
                     Queue<Vertex> q = new LinkedList<Vertex>();
@@ -751,7 +818,7 @@ public class Drawing extends javax.swing.JPanel {
                         }
                         u = u.prev;
                     }
-                    
+
                     u = residual.getVertex(sink);
                     while (u != null) {
                         graph.getVertex(u.name).vColor = Color.GREEN;
@@ -784,7 +851,7 @@ public class Drawing extends javax.swing.JPanel {
                         }
                         u = u.prev;
                         if (u.name.equals(source)) {
-                        	graph.getVertex(u.name).vColor = Color.GREEN;
+                            graph.getVertex(u.name).vColor = Color.GREEN;
                             gui.info(u.name, -1, -1, -1, true, null, null);
                             repaint();
                             sleep(GUI_EXECUTION_PAUSE);
@@ -797,9 +864,11 @@ public class Drawing extends javax.swing.JPanel {
                 graph.resetGraphColors();
                 graph.getVertex(source).vColor = Color.RED;
                 for (Vertex v : graph.getVertices()) {
-                	for (Edge e : v.adj)
-                		if (e.flow > 0)
-                			e.eColor = Color.RED;
+                    for (Edge e : v.adj) {
+                        if (e.flow > 0) {
+                            e.eColor = Color.RED;
+                        }
+                    }
                 }
                 repaint();
 
@@ -840,14 +909,111 @@ public class Drawing extends javax.swing.JPanel {
         }
     }
 
+    private class AStar extends DrawingThread {
+
+        private String source, dest;
+
+        public AStar(String source, String dest) {
+            this.source = source;
+            this.dest = dest;
+        }
+
+        @Override
+        public void work() {
+            try {
+
+                doFillVertex = true;
+
+                Vertex start = graph.getVertex(source);
+                Vertex goal = graph.getVertex(dest);
+
+                // The set of nodes to be evaluated
+                PairingHeap<Vertex> open_set = new PairingHeap<Vertex>();
+                open_set.useComparator(new Vertex.AStarComparator());
+                // The set of nodes already evaluated
+                Set<Vertex> closed_set = new HashSet<Vertex>();
+
+                start.g = 0;
+                start.f = start.g + start.heuristicDistanceTo(goal);
+                open_set.insert(start);
+
+                boolean pathFound = false;
+                int nrSteps = 0;
+
+                while (!open_set.isEmpty()) {
+
+                    Vertex current = open_set.deleteMin();
+
+                    // We are done, goal reached
+                    if (current.name.equals(goal.name)) {
+                        gui.console("Path cost: " + graph.getVertex(goal.name).g);
+                        gui.console("Steps: " + nrSteps);
+                        graph.resetGraphColors();
+
+                        pathFound = true;
+
+                        List<String> path = new ArrayList<String>();
+
+                        Vertex n = graph.getVertex(goal.name);
+                        while (n != null) {
+                            path.add(n.name);
+                            n = n.prev;
+                        }
+                        // The path is from goal to start, reverse it
+                        Collections.reverse(path);
+                        for (String s : path) {
+                            graph.getVertex(s).vColor = Color.RED;
+                            repaint();
+                            sleep(GUI_EXECUTION_PAUSE);
+                        }
+                        break;
+                    }
+                    closed_set.add(current);
+                    for (Edge e : current.adj) {
+                        nrSteps++;
+                        Vertex neigh = e.dest;
+                        if (closed_set.contains(neigh)) // already evaluated
+                        {
+                            continue;
+                        }
+                        int g = current.g + e.cost;
+                        if (!open_set.contains(neigh) || g < neigh.g) {
+                            neigh.prev = current;
+                            neigh.g = g;
+                            // f = g + h
+                            neigh.f = neigh.g + neigh.heuristicDistanceTo(goal);
+                            if (!open_set.contains(neigh)) {
+                                open_set.insert(neigh);
+                            }
+                            neigh.vColor = Color.RED;
+                            repaint();
+                            sleep(GUI_EXECUTION_PAUSE);
+                        }
+                    }
+                }
+                if (!pathFound) {
+                    gui.console("Path NOT found!");
+                }
+
+                sleep(GUI_RESULT_PAUSE);
+
+                clearAll();
+                repaint();
+
+            } catch (Exception e) {
+
+            }
+        }
+    }
+
     public void isBipartite() {
         (currentThread = new IsBipartite()).start();
     }
 
-    private class IsBipartite extends Thread {
+    private class IsBipartite extends DrawingThread {
 
         @Override
-        public void run() {
+        public void work() {
             gui.console(graph.isBipartite() + " ");
             graph.clear();
             doFillVertex = true;
@@ -911,7 +1077,7 @@ public class Drawing extends javax.swing.JPanel {
                 gui.console(">> IS BIPARTITE");
             }
             try {
-            	sleep(GUI_RESULT_PAUSE);
+                sleep(GUI_RESULT_PAUSE);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Drawing.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -924,6 +1090,7 @@ public class Drawing extends javax.swing.JPanel {
     private void clearAll() {
         doFillVertex = false;
         graph.clear();
+        gui.executingDisableMenus(true);
     }
 
     private int relX() {
@@ -948,10 +1115,6 @@ public class Drawing extends javax.swing.JPanel {
         graph.removeVertex(vertexName);
         coordToName.remove(p);
         repaint();
-    }
-
-    private void removeEdges(Vertex v) {
-        graph.removeEdges(v);
     }
 
     public void removeVertex() {
@@ -984,8 +1147,7 @@ public class Drawing extends javax.swing.JPanel {
             g2d.draw(e);
         }
         g2d.setColor(Color.BLACK);
-        int fontSize = 20;
-        g2d.setFont(new Font("TimesRoman", Font.PLAIN, fontSize));
+        g2d.setFont(new Font("TimesRoman", Font.BOLD, FONT_SIZE));
 
         String s = name;
         if (showVertexDist) {
@@ -993,7 +1155,7 @@ public class Drawing extends javax.swing.JPanel {
         }
 
         if (showVertexName) {
-        	g2d.drawString(s, xx + SQUARE_SIZE / 2, yy + SQUARE_SIZE / 2);
+            g2d.drawString(s, xx + SQUARE_SIZE / 4, yy + (int) (SQUARE_SIZE / 1.5));
         }
     }
 
@@ -1001,10 +1163,11 @@ public class Drawing extends javax.swing.JPanel {
         Graphics2D g2d = (Graphics2D) g;
 
         g2d.setColor(color);
-        if (color.equals(Color.RED))
-        	g2d.setStroke(new BasicStroke(3));
-        else
-        	g2d.setStroke(new BasicStroke(1));
+        if (color.equals(Color.RED)) {
+            g2d.setStroke(new BasicStroke(3));
+        } else {
+            g2d.setStroke(new BasicStroke(1));
+        }
 
         x0 = x0 * SQUARE_SIZE + SQUARE_SIZE / 2;
         y0 = y0 * SQUARE_SIZE + SQUARE_SIZE / 2;
@@ -1091,43 +1254,42 @@ public class Drawing extends javax.swing.JPanel {
         }
 
         for (Vertex v : graph.getVertices()) {
-        	drawVertex(v.x, v.y, v.name, v.dist, v.vColor);
-        	for (Edge e : v.adj) {
-        		drawEdge2(e.src.x, e.src.y, e.dest.x, e.dest.y, e.cost, e.flow, e.eColor);
-        	}
-        }
-        
-        /*
-        Iterator it = coordToName.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pairs = (Map.Entry) it.next();
-            String name = (String) pairs.getValue();
-
-            Vertex v = graph.getVertex(name);
-
-            drawVertex(v.x, v.y, name, v.dist, v.vColor);
+            drawVertex(v.x, v.y, v.name, v.dist, v.vColor);
             for (Edge e : v.adj) {
                 drawEdge2(e.src.x, e.src.y, e.dest.x, e.dest.y, e.cost, e.flow, e.eColor);
             }
         }
-        */
 
+        /*
+         Iterator it = coordToName.entrySet().iterator();
+         while (it.hasNext()) {
+         Map.Entry pairs = (Map.Entry) it.next();
+         String name = (String) pairs.getValue();
+
+         Vertex v = graph.getVertex(name);
+
+         drawVertex(v.x, v.y, name, v.dist, v.vColor);
+         for (Edge e : v.adj) {
+         drawEdge2(e.src.x, e.src.y, e.dest.x, e.dest.y, e.cost, e.flow, e.eColor);
+         }
+         }
+         */
     }
 
     public void save(String name) {
         try {
-        	System.out.println(graph.getVertexMap().size());
-        	FileOutputStream fos = new FileOutputStream(name);
+            System.out.println(graph.getVertexMap().size());
+            FileOutputStream fos = new FileOutputStream(name);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             List<Vertex> vs = new ArrayList<Vertex>(graph.getVertices());
             List<SerializableVertex> ll = new ArrayList<SerializableVertex>();
             for (Vertex v : vs) {
-            	SerializableVertex sv = new SerializableVertex(
-            			v.x, v.y, v.name, v.adj.size());
-            	for (Edge e : v.adj) {
-            		sv.addAdjEdge(e.src.name, e.dest.name, e.cost);
-            	}
-            	ll.add(sv);
+                SerializableVertex sv = new SerializableVertex(
+                        v.x, v.y, v.name, v.adj.size());
+                for (Edge e : v.adj) {
+                    sv.addAdjEdge(e.src.name, e.dest.name, e.cost);
+                }
+                ll.add(sv);
             }
             oos.writeObject(ll);
             oos.flush();
@@ -1140,29 +1302,29 @@ public class Drawing extends javax.swing.JPanel {
     public void load(String name) {
         clearAll();
         try {
-        	
-        	coordToName.clear();
+
+            coordToName.clear();
             graph.clear();
-        	
-        	FileInputStream fis = new FileInputStream(name);
+
+            FileInputStream fis = new FileInputStream(name);
             ObjectInput ois = new ObjectInputStream(fis);
-            List<SerializableVertex> l = (List<SerializableVertex>)ois.readObject(); 
+            List<SerializableVertex> l = (List<SerializableVertex>) ois.readObject();
             ois.close();
-            
+
             for (SerializableVertex v : l) {
-            	graph.addVertex(v.x, v.y, v.name);
+                graph.addVertex(v.x, v.y, v.name);
             }
-            
+
             for (SerializableVertex v : l) {
-            	for (Edge e : v.adj) {
-            		graph.addEdge(e.src.name, e.dest.name, e.cost);
-            	}
+                for (Edge e : v.adj) {
+                    graph.addEdge(e.src.name, e.dest.name, e.cost);
+                }
             }
-            
+
             for (Vertex v : graph.getVertices()) {
-            	coordToName.put(new Point(v.x, v.y), v.name);
+                coordToName.put(new Point(v.x, v.y), v.name);
             }
-            
+
             repaint();
 
         } catch (Exception ex) {
@@ -1226,9 +1388,9 @@ public class Drawing extends javax.swing.JPanel {
          */
         /*
          int[] a = new int[]{1,2,3,4,5};
-        
+
          int[] ap = rootArray(a, 0, 0); printArray(ap);
-        
+
          swap(ap, 4, 5); printArray(ap);
          ap = rootArray(a, 0, 0);
          swap(ap, 3, 5); printArray(ap);
@@ -1236,7 +1398,7 @@ public class Drawing extends javax.swing.JPanel {
          ap = rootArray(a, 0, 0);
          swap(ap, 3, 4); printArray(ap);
          swap(ap, 4, 5); printArray(ap);
-        
+
          ap = rootArray(a, 2, 3); printArray(ap);
          swap(ap, 4, 5); printArray(ap);
          ap = rootArray(a, 2, 3);
@@ -1245,7 +1407,7 @@ public class Drawing extends javax.swing.JPanel {
          ap = rootArray(a, 2, 3);
          swap(ap, 3, 4); printArray(ap);
          swap(ap, 4, 5); printArray(ap);
-       
+
          ap = rootArray(a, 2, 4); printArray(ap);
          swap(ap, 4, 5); printArray(ap);
          ap = rootArray(a, 2, 4);
@@ -1254,7 +1416,7 @@ public class Drawing extends javax.swing.JPanel {
          ap = rootArray(a, 2, 4);
          swap(ap, 3, 4); printArray(ap);
          swap(ap, 4, 5); printArray(ap);
- 
+
          ap = rootArray(a, 2, 5); printArray(ap);        
          swap(ap, 4, 5); printArray(ap);
          ap = rootArray(a, 2, 5);

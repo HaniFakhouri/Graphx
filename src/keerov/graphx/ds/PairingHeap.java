@@ -1,12 +1,16 @@
 package keerov.graphx.ds;
 
+import java.util.Comparator;
+
 public class PairingHeap<T extends Comparable<? super T>> {
 
     private PairNode<T> root;
     private int size;
+    private Comparator<T> comp;
 
     public PairingHeap() {
         root = null;
+        comp = null;
         size = 0;
     }
 
@@ -57,7 +61,7 @@ public class PairingHeap<T extends Comparable<? super T>> {
 
         PairNode<T> p = (PairNode<T>) pos;
 
-        if (p.element == null || p.element.compareTo(newVal) < 0) {
+        if (p.element == null || compare(p.element, newVal) < 0) {
             return;
         }
 
@@ -83,13 +87,17 @@ public class PairingHeap<T extends Comparable<? super T>> {
         }
         return root.element;
     }
+    
+    public void useComparator(Comparator<T> comp) {
+    	this.comp = comp;
+    }
 
     private PairNode<T> compareAndLink(PairNode<T> first, PairNode<T> second) {
         if (second == null) {
             return first;
         }
 
-        if (second.element.compareTo(first.element) < 0) {
+        if (compare(second.element, first.element) < 0) {
             second.prev = first.prev;
             first.prev = second;
             first.nextSibling = second.leftChild;
@@ -183,6 +191,24 @@ public class PairingHeap<T extends Comparable<? super T>> {
             return n.nextSibling;
         }
         return n;
+    }
+    
+    public boolean contains(T x) {
+    	return contains(root, x);
+    }
+    
+    private boolean contains(PairNode<T> n, T x) {
+    	if (n == null)
+    		return false;
+    	if (n.element.equals(x))
+    		return true;
+    	return contains(n.leftChild, x) || contains(n.nextSibling, x);
+    }
+    
+    private int compare(T t1, T t2) {
+    	if (comp != null)
+    		return comp.compare(t1, t2);
+    	return t1.compareTo(t2);
     }
 
     public interface Position<T> {

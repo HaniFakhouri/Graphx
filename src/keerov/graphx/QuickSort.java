@@ -7,7 +7,7 @@ public class QuickSort {
     private static final int CUTOFF = 5;
     private static Comparator cmp;
 
-    public void setComparator(Comparator cmp) {
+    public void useComparator(Comparator cmp) {
         this.cmp = cmp;
     }
 
@@ -22,6 +22,7 @@ public class QuickSort {
         quickSort(a, 0, a.length - 1);
     }
 
+    @SuppressWarnings("empty-statement")
     private static <T extends Comparable<? super T>> void quickSort(T[] a, int low, int high) {
 
         if (low + CUTOFF >= high) {
